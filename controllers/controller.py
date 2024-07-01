@@ -1,8 +1,9 @@
-from flask import render_template, request
+from flask import render_template, request, jsonify
 import docxpy
 import fitz
 import google.generativeai as genai
 import os
+import requests
 
 api_key = 'AIzaSyC5eiiEPoczJrSU7r9vYTpg7zYRuletAgg'
 
@@ -162,9 +163,21 @@ def generate_response(text):
 
 def index():
     if request.method == 'POST':
-        uploaded_file = request.files['file']
-        file_path = 'uploads/' + uploaded_file.filename
-        uploaded_file.save(file_path)
+        file_url = request.json.get('file_url')
+
+        response = requests.get(file_url)
+        # Create uploads directory if it doesn't exist
+        if not os.path.exists('uploads'):
+          os.makedirs('uploads')
+        
+        # Get the file name from the URL
+        file_name = file_url.split('/')[-1]
+        file_path = 'uploads/' + file_name
+        
+        # Save the downloaded file to the uploads directory
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
+
         extracted_text = extract_text(file_path)
         generated_response = generate_response(extracted_text)
         # Replace all occurrences of "null" with empty string
@@ -222,6 +235,6 @@ def index():
         text_one = parse_dates(modified_text)
         final_text = convert_to_mm_yyyy(text_one)
         os.remove(file_path)
-        # print(final_text)
-        return render_template('index.html', extracted_text=extracted_text, generated_response=final_text)
+        print(final_text)
+        return jsonify(final_text)
     return render_template('index.html')
