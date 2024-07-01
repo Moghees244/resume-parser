@@ -236,5 +236,5 @@ def index():
         final_text = convert_to_mm_yyyy(text_one)
         os.remove(file_path)
         print(final_text)
-        return jsonify(final_text)
+        return jsonify(data=final_text)
     return render_template('index.html')
